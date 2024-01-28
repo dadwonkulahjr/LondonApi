@@ -1,11 +1,13 @@
 using LondonAPI.ApiServices;
 using LondonAPI.DataSource;
 using LondonAPI.Filters;
+using LondonAPI.GenericsT;
 using LondonAPI.Infrastructure;
 using LondonAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +17,17 @@ builder.Services.AddControllers(options =>
     options.Filters.Add<JsonExceptionFilter>();
     options.Filters.Add<RequireHttpsOrCloseAttribute>();
     options.Filters.Add<LinkRewritingFilter>();
-});
+}).AddJsonOptions(options =>
+{
+    // These should be the defaults, but we can be explicit:
+    //options.JsonSerializerOptions.Date.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
+    //options.SerializerSettings.DateFormatHandling = DateFormatHandling.IsoDateFormat;
+    //options.SerializerSettings.DateParseHandling = DateParseHandling.DateTimeOffset;
+
+}); ;
+
+
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -27,6 +39,9 @@ builder.Services.AddRouting(options =>
 });
 //Add Service
 builder.Services.AddScoped<IApiRoomService, RoomServiceImplementation>();
+builder.Services.AddScoped<IBookingService, DefaultBookingService>();
+builder.Services.AddScoped<IOpeningService, DefaultOpeningServiceImplementation>();
+builder.Services.AddScoped<IDateLogicService, DefaultDateLogicServiceImplementation>();
 
 //Register AutoMappper Service using Microsoft DI container
 builder.Services.AddAutoMapper(options =>
@@ -42,6 +57,8 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
     options.ApiVersionSelector = new CurrentImplementationApiVersionSelector(options);
 });
+
+
 
 //Fetch mock data from appsettings.json file
 builder.Services.Configure<HotelInfo>(builder.Configuration.GetSection("Info"));
